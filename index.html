@@ -279,15 +279,23 @@
   <main class="app">
     <section class="panel">
       <h1>Генерация фирменного паттерна для доставки «Внучок»</h1>
-      <p class="subtitle">Настраивай размер, цвет и размер макета. Картинка обновляется сразу, а готовый PNG можно скачать или скопировать.</p>
+      <p class="subtitle">Настраивай ширину, высоту, цвет и размер макета. Картинка обновляется сразу, а готовый PNG можно скачать или скопировать.</p>
 
       <div class="controls">
         <div class="group">
           <div class="label-row">
-            <label for="frameSize">Размер макета</label>
-            <input class="number-input" id="frameSizeInput" type="number" min="320" max="1600" step="10" value="1080" aria-label="Ввести размер макета" />
+            <label for="width">Ширина макета</label>
+            <input class="number-input" id="widthInput" type="number" min="320" max="1600" step="10" value="1080" aria-label="Ввести ширину макета" />
           </div>
-          <input id="frameSize" type="range" min="320" max="1600" step="10" value="1080" />
+          <input id="width" type="range" min="320" max="1600" step="10" value="1080" />
+        </div>
+
+        <div class="group">
+          <div class="label-row">
+            <label for="height">Высота макета</label>
+            <input class="number-input" id="heightInput" type="number" min="320" max="1600" step="10" value="1080" aria-label="Ввести высоту макета" />
+          </div>
+          <input id="height" type="range" min="320" max="1600" step="10" value="1080" />
         </div>
 
         <div class="group">
@@ -332,19 +340,21 @@
         <div class="preview-meta" id="previewMeta">1080 × 1080</div>
       </div>
       <div class="stage">
-        <canvas id="canvas" width="1080" height="1080" aria-label="Превью генерации"></canvas>
+      <canvas id="canvas" width="1080" height="1080" aria-label="Превью генерации"></canvas>
       </div>
     </section>
   </main>
 
   <script>
     const els = {
-      frameSize: document.getElementById('frameSize'),
+      width: document.getElementById('width'),
+      height: document.getElementById('height'),
       radius: document.getElementById('radius'),
       count: document.getElementById('count'),
       circleColor: document.getElementById('circleColor'),
       colorCode: document.getElementById('colorCode'),
-      frameSizeInput: document.getElementById('frameSizeInput'),
+      widthInput: document.getElementById('widthInput'),
+      heightInput: document.getElementById('heightInput'),
       radiusInput: document.getElementById('radiusInput'),
       countInput: document.getElementById('countInput'),
       previewMeta: document.getElementById('previewMeta'),
@@ -362,7 +372,8 @@
 
     function getSettings() {
       return {
-        frameSize: Number(els.frameSize.value),
+        width: Number(els.width.value),
+        height: Number(els.height.value),
         radius: Number(els.radius.value),
         count: Number(els.count.value),
         color: els.circleColor.value,
@@ -371,10 +382,11 @@
 
     function syncLabels() {
       const s = getSettings();
-      els.frameSizeInput.value = s.frameSize;
+      els.widthInput.value = s.width;
+      els.heightInput.value = s.height;
       els.radiusInput.value = s.radius;
       els.countInput.value = s.count;
-      els.previewMeta.textContent = `${s.frameSize} × ${s.frameSize}`;
+      els.previewMeta.textContent = `${s.width} × ${s.height}`;
     }
 
     function scheduleRender() {
@@ -382,7 +394,7 @@
       regenerateTimer = window.setTimeout(renderAll, 90);
     }
 
-    function generateCircles({ frameSize, radius, count }) {
+    function generateCircles({ width, height, radius, count }) {
       const circles = [];
       const maxAttempts = Math.max(2500, count * 4000);
       const margin = radius;
@@ -391,8 +403,8 @@
 
       while (circles.length < count && attempts < maxAttempts) {
         attempts += 1;
-        const x = margin + Math.random() * Math.max(1, frameSize - margin * 2);
-        const y = margin + Math.random() * Math.max(1, frameSize - margin * 2);
+        const x = margin + Math.random() * Math.max(1, width - margin * 2);
+        const y = margin + Math.random() * Math.max(1, height - margin * 2);
 
         let valid = true;
         for (const other of circles) {
@@ -411,10 +423,10 @@
     }
 
     function draw() {
-      const { frameSize, radius, color } = getSettings();
-      els.canvas.width = frameSize;
-      els.canvas.height = frameSize;
-      ctx.clearRect(0, 0, frameSize, frameSize);
+      const { width, height, radius, color } = getSettings();
+      els.canvas.width = width;
+      els.canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = color;
       ctx.strokeStyle = 'transparent';
 
@@ -478,7 +490,7 @@
       els.status.textContent = 'Скопировать картинку не удалось в этом браузере.';
     }
 
-    for (const input of [els.frameSize, els.radius, els.count, els.circleColor]) {
+    for (const input of [els.width, els.height, els.radius, els.count, els.circleColor]) {
       input.addEventListener('input', scheduleRender);
     }
 
@@ -498,7 +510,8 @@
       });
     }
 
-    syncNumberInput(els.frameSizeInput, els.frameSize);
+    syncNumberInput(els.widthInput, els.width);
+    syncNumberInput(els.heightInput, els.height);
     syncNumberInput(els.radiusInput, els.radius);
     syncNumberInput(els.countInput, els.count);
 
