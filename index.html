@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Генератор кружочков</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23FFCE08'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1eb;
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-border: rgba(34, 34, 34, 0.08);
+      --text: #1f2430;
+      --muted: #5c6472;
+      --accent: #320000;
+      --accent-2: #4a0505;
+      --shadow: 0 18px 50px rgba(27, 34, 47, 0.12);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 32%),
+        linear-gradient(180deg, #f8f4ef 0%, #ebe8e1 100%);
+    }
+
+    .app {
+      width: min(1200px, calc(100vw - 32px));
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel, .preview {
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .panel {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .group { margin: 16px 0; }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 650;
+      color: #273142;
+    }
+
+    .value {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="color"] {
+      width: 100%;
+      height: 46px;
+      border: 1px solid rgba(34, 34, 34, 0.12);
+      border-radius: 14px;
+      padding: 4px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    #copy {
+      grid-column: 1 / -1;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      outline: none;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    button:focus-visible {
+      outline: 2px solid rgba(50, 0, 0, 0.35);
+      outline-offset: 2px;
+    }
+
+    .primary {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: white;
+      box-shadow: 0 12px 24px rgba(50, 0, 0, 0.22);
+    }
+
+    .primary:hover {
+      box-shadow: 0 16px 30px rgba(50, 0, 0, 0.3);
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text);
+      border: 1px solid rgba(34, 34, 34, 0.08);
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 1.3em;
+    }
+
+    .preview {
+      padding: 18px;
+    }
+
+    .preview-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .preview-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .preview-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stage {
+      display: grid;
+      place-items: center;
+      min-height: 680px;
+      border-radius: 18px;
+      padding: 18px;
+      background:
+        linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.04) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.04) 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+      background: transparent;
+    }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .stage { min-height: 520px; }
+    }
+
+    @media (max-width: 640px) {
+      .app { width: calc(100vw - 20px); margin: 10px auto; }
+      .button-row { grid-template-columns: 1fr; }
+      #copy { grid-column: auto; }
+      .stage { min-height: 420px; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>Генерация фирменного паттерна для доставки «Внучок»</h1>
+      <p class="subtitle">Настраивай размер, цвет и размер фрейма. Картинка обновляется сразу, а готовый PNG можно скачать или скопировать.</p>
+
+      <div class="controls">
+        <div class="group">
+          <div class="label-row">
+            <label for="frameSize">Размер фрейма</label>
+            <div class="value" id="frameSizeValue"></div>
+          </div>
+          <input id="frameSize" type="range" min="320" max="1600" step="10" value="1080" />
+        </div>
+
+        <div class="group">
+          <div class="label-row">
+            <label for="radius">Размер круга</label>
+            <div class="value" id="radiusValue"></div>
+          </div>
+          <input id="radius" type="range" min="6" max="120" step="1" value="40" />
+        </div>
+
+        <div class="group">
+          <div class="label-row">
+            <label for="count">Количество кругов</label>
+            <div class="value" id="countValue"></div>
+          </div>
+          <input id="count" type="range" min="1" max="200" step="1" value="30" />
+        </div>
+
+        <div class="group">
+          <div class="label-row">
+            <label for="circleColor">Цвет кругов</label>
+            <div class="value" id="colorValue">#FFCE08</div>
+          </div>
+          <input id="circleColor" type="color" value="#ffce08" />
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="primary" id="regen">Обновить</button>
+        <button class="ghost" id="download">Скачать</button>
+        <button class="ghost" id="copy">Скопировать</button>
+      </div>
+
+      <div class="status" id="status">Готово.</div>
+    </section>
+
+    <section class="preview">
+      <div class="preview-top">
+        <div class="preview-title">Превью</div>
+        <div class="preview-meta" id="previewMeta">1080 × 1080</div>
+      </div>
+      <div class="stage">
+        <canvas id="canvas" width="1080" height="1080" aria-label="Превью генерации"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      frameSize: document.getElementById('frameSize'),
+      radius: document.getElementById('radius'),
+      count: document.getElementById('count'),
+      circleColor: document.getElementById('circleColor'),
+      frameSizeValue: document.getElementById('frameSizeValue'),
+      radiusValue: document.getElementById('radiusValue'),
+      countValue: document.getElementById('countValue'),
+      colorValue: document.getElementById('colorValue'),
+      previewMeta: document.getElementById('previewMeta'),
+      status: document.getElementById('status'),
+      canvas: document.getElementById('canvas'),
+      regen: document.getElementById('regen'),
+      download: document.getElementById('download'),
+      copy: document.getElementById('copy'),
+    };
+
+    const ctx = els.canvas.getContext('2d');
+    let circles = [];
+    let regenerateTimer = 0;
+    let lastBlob = null;
+
+    function getSettings() {
+      return {
+        frameSize: Number(els.frameSize.value),
+        radius: Number(els.radius.value),
+        count: Number(els.count.value),
+        color: els.circleColor.value,
+      };
+    }
+
+    function syncLabels() {
+      const s = getSettings();
+      els.frameSizeValue.textContent = `${s.frameSize}px`;
+      els.radiusValue.textContent = `${s.radius}px`;
+      els.countValue.textContent = `${s.count}`;
+      els.colorValue.textContent = s.color.toUpperCase();
+      els.previewMeta.textContent = `${s.frameSize} × ${s.frameSize}`;
+    }
+
+    function scheduleRender() {
+      window.clearTimeout(regenerateTimer);
+      regenerateTimer = window.setTimeout(renderAll, 90);
+    }
+
+    function generateCircles({ frameSize, radius, count }) {
+      const circles = [];
+      const maxAttempts = Math.max(2500, count * 4000);
+      const margin = radius;
+      const minDistance = radius * 2;
+      let attempts = 0;
+
+      while (circles.length < count && attempts < maxAttempts) {
+        attempts += 1;
+        const x = margin + Math.random() * Math.max(1, frameSize - margin * 2);
+        const y = margin + Math.random() * Math.max(1, frameSize - margin * 2);
+
+        let valid = true;
+        for (const other of circles) {
+          const dx = x - other.x;
+          const dy = y - other.y;
+          if (Math.hypot(dx, dy) < minDistance) {
+            valid = false;
+            break;
+          }
+        }
+
+        if (valid) circles.push({ x, y });
+      }
+
+      return circles;
+    }
+
+    function draw() {
+      const { frameSize, radius, color } = getSettings();
+      els.canvas.width = frameSize;
+      els.canvas.height = frameSize;
+      ctx.clearRect(0, 0, frameSize, frameSize);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = 'transparent';
+
+      for (const circle of circles) {
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    async function updateBlob() {
+      lastBlob = await new Promise((resolve) => els.canvas.toBlob(resolve, 'image/png'));
+    }
+
+    async function renderAll() {
+      syncLabels();
+      const settings = getSettings();
+      circles = generateCircles(settings);
+      draw();
+      await updateBlob();
+      els.status.textContent = 'Готово.';
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function downloadImage() {
+      if (!lastBlob) await updateBlob();
+      if (!lastBlob) {
+        els.status.textContent = 'Не удалось подготовить файл.';
+        return;
+      }
+      const name = `circles-${Date.now()}.png`;
+      downloadBlob(lastBlob, name);
+      els.status.textContent = 'PNG скачан.';
+    }
+
+    async function copyImage() {
+      if (!lastBlob) await updateBlob();
+      if (!lastBlob) {
+        els.status.textContent = 'Не удалось подготовить изображение.';
+        return;
+      }
+
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': lastBlob })]);
+          els.status.textContent = 'Изображение скопировано в буфер.';
+          return;
+        }
+      } catch (error) {
+        console.warn(error);
+      }
+
+      els.status.textContent = 'Скопировать картинку не удалось в этом браузере.';
+    }
+
+    for (const input of [els.frameSize, els.radius, els.count, els.circleColor]) {
+      input.addEventListener('input', scheduleRender);
+    }
+
+    els.regen.addEventListener('click', renderAll);
+    els.download.addEventListener('click', downloadImage);
+    els.copy.addEventListener('click', copyImage);
+
+    renderAll();
+  </script>
+</body>
+</html>
